@@ -1,14 +1,18 @@
+//Dependencias
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import cities from './provincias.json'; // Importa el archivo JSON con las ciudades de España
+import { WiRain, WiThermometer, WiThermometerExterior } from "react-icons/wi";
+import ClipLoader from 'react-spinners/ClipLoader';
 
+//APP
 const Weather = () => {
   const [weatherInfo, setWeatherInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [latitude, setLatitude] = useState(null);
   const [longitude, setLongitude] = useState(null);
-  
+
   const haversineDistance = (lat1, lon1, lat2, lon2) => {
     const toRad = (value) => (value * Math.PI) / 180;
     const R = 6371; // Radio de la Tierra en kilómetros
@@ -22,14 +26,16 @@ const Weather = () => {
     const distance = R * c;
     return distance;
   };
-  
+
+  //Formateo del nombre de la ciudad
   const formatCityName = (name) => {
     const city = cities.find((city) => name.toLowerCase().includes(city.label.toLowerCase()));
     console.log(city, name, cities);
     return city ? city.label : name;
   };
-  
+
   useEffect(() => {
+    //Obtener ubicación actual
     const fetchLocation = () => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -55,11 +61,13 @@ const Weather = () => {
     const fetchWeatherData = async () => {
       if (latitude && longitude) {
         try {
+          //Obtener apiKey (de la aemet) del fichero ./.env
           const apiKey = process.env.REACT_APP_AEMET_API_KEY;
           if (!apiKey) {
             throw new Error('API key is missing');
           }
 
+          //Obtener todos los datos meteorológicos
           const url = `https://opendata.aemet.es/opendata/api/observacion/convencional/todas?api_key=${apiKey}`;
           console.log(`API URL: ${url}`);
 
@@ -94,7 +102,11 @@ const Weather = () => {
     fetchWeatherData();
   }, [latitude, longitude]);
 
-  if (loading) return <div>Loading...</div>;
+  //Carga inicial de los datos
+  if (loading) return (<div className="loader-container">
+    <p>Cargando datos meteorológicos... <ClipLoader color={'#123abc'} loading={loading} size={50} /></p>
+  </div>
+  );
   if (error) return <div>Error: {error.message}</div>;
 
   return (
@@ -103,9 +115,10 @@ const Weather = () => {
       {weatherInfo ? (
         <div>
           <p>Ciudad: {formatCityName(weatherInfo.ubi)}</p>
-          <p>Temperatura Mínima: {weatherInfo.tamin} °C</p>
-          <p>Temperatura Máxima: {weatherInfo.tamax} °C</p>
-          <p>Precipitación: {weatherInfo.prec} mm</p>
+          <p><WiThermometerExterior /> Temperatura Mínima: {weatherInfo.tamin} °C</p>
+          <p><WiThermometer /> Temperatura Máxima: {weatherInfo.tamax} °C</p>
+          <p><WiRain /> {weatherInfo.prec} mm </p>
+
         </div>
       ) : (
         <div>No se encontraron datos meteorológicos para esta ubicación.</div>
